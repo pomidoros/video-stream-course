@@ -261,6 +261,8 @@ def people(root, output):
     all_acc = []
     stress_acc = []
     natural = []
+    iou_acc = []
+    iou_stress_acc = []
     for clip in load_manifest(C)["clips"]:
         data = load_clip(C, clip)
         gt = load_labels(C, clip)
@@ -287,6 +289,29 @@ def people(root, output):
             scores[mode] = (
                 mm.metrics.create().compute(acc, metrics=fields).iloc[0].to_dict()
             )
+            baseline = solution.track_with_iou(inp, clip["fps"])
+            contracts.people_rows(baseline, inp, clip["fps"])
+            dump(output / f"{name}.iou.{mode}.tracks.json", baseline)
+            baseline_acc = accumulator(baseline, gt)
+            scores[f"iou_{mode}"] = (
+                mm.metrics.create()
+                .compute(baseline_acc, metrics=fields)
+                .iloc[0]
+                .to_dict()
+            )
+            if clip["split"] == "evaluation":
+                (iou_acc if mode == "normal" else iou_stress_acc).append(baseline_acc)
+            if mode == "normal":
+                from project.practice import save_statistics
+
+                for method, track_rows in [("deepsort", rows), ("iou", baseline)]:
+                    stats = solution.player_statistics(
+                        track_rows,
+                        clip["fps"] / clip["stride"],
+                        (clip["width"], clip["height"]),
+                    )
+                    save_statistics(stats, output / f"{name}.{method}.statistics")
+
             if clip["split"] == "evaluation":
                 (all_acc if mode == "normal" else stress_acc).append(acc)
         scores["retrieval"] = retrieval_score(solution, data, gt)
@@ -309,7 +334,27 @@ def people(root, output):
     agg["retrieval_top1"] = sum(r["top1_correct"] for r in natural) / sum(
         r["known"] for r in natural
     )
-    result = dict(aggregate=agg, gaps_aggregate=gaps, clips=result)
+    baseline = (
+        mm.metrics.create()
+        .compute_many(iou_acc, names=names, metrics=fields, generate_overall=True)
+        .loc["OVERALL"]
+        .to_dict()
+    )
+    baseline_gaps = (
+        mm.metrics.create()
+        .compute_many(
+            iou_stress_acc, names=names, metrics=fields, generate_overall=True
+        )
+        .loc["OVERALL"]
+        .to_dict()
+    )
+    result = dict(
+        aggregate=agg,
+        gaps_aggregate=gaps,
+        iou_aggregate=baseline,
+        iou_gaps_aggregate=baseline_gaps,
+        clips=result,
+    )
     dump(output / "people_metrics.json", result)
     return result
 

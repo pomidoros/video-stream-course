@@ -61,3 +61,10 @@ def stress_input(data):
     dropped = data["frames"][[20 <= i % 45 < 25 for i in range(len(data["frames"]))]]
     mask = ~np.isin(data["det_frame"], dropped)
     return {k: v.copy() if k == "frames" else v[mask].copy() for k, v in data.items()}
+
+
+def video_solution():
+    """Подключить функции учебного упражнения с видео."""
+    return importlib.import_module(
+        os.environ.get("COURSE_VIDEO_MODULE", "video_student")
+    )

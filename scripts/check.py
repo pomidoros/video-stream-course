@@ -28,7 +28,7 @@ patterns = {
         "test_infrastructure.py",
         "test_data_setup.py",
     ],
-    "contracts": ["test_contracts.py"],
+    "contracts": ["test_contracts.py", "test_practice.py"],
     "metrics": ["test_metrics.py"],
     "all": ["test_*.py"],
 }[a.suite]

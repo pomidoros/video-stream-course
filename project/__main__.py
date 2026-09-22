@@ -9,7 +9,15 @@ from project.thresholds import checks
 def main():
     p = argparse.ArgumentParser(description="Student basketball video project")
     sub = p.add_subparsers(dest="command", required=True)
-    for name in ["run", "train", "evaluate", "predict", "render-people", "render-ball"]:
+    for name in [
+        "run",
+        "train",
+        "evaluate",
+        "predict",
+        "video",
+        "render-people",
+        "render-ball",
+    ]:
         s = sub.add_parser(name)
         s.add_argument("--data", type=Path, default=ROOT)
         s.add_argument("--output", type=Path, default=ROOT / "outputs")
@@ -34,6 +42,9 @@ def main():
     if a.command == "run":
         from project.visualization import render_people, render_ball
 
+        from project.practice import video_exercise
+
+        exercise = video_exercise(a.data, a.output / "video")
         training = pipeline.train(a.data, a.models)
         metrics = pipeline.evaluate(a.data, a.models, a.output)
         thresholds = checks(metrics)
@@ -42,10 +53,19 @@ def main():
             render_ball(a.data, a.output, a.output / "videos", "indoor_09"),
             render_people(a.data, a.output, a.output / "videos", "basket_S6T2_post"),
         ]
-        result = dict(training=training, thresholds=thresholds, videos=videos)
+        result = dict(
+            training=training,
+            thresholds=thresholds,
+            videos=videos,
+            video_exercise=exercise,
+        )
         dump(a.output / "run.json", result)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         raise SystemExit(0 if all(row["passed"] for row in thresholds) else 1)
+    elif a.command == "video":
+        from project.practice import video_exercise
+
+        result = video_exercise(a.data, a.output / "video")
     elif a.command == "train":
         result = pipeline.train(a.data, a.models, a.seed, a.epochs)
     elif a.command == "predict":
