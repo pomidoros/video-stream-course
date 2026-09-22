@@ -8,6 +8,9 @@ artifacts/
 outputs/
 *.pt
 *.pth
+*.onnx
+/models/
+/dist/
 .env
 .env.*
 *.pem
