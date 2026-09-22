@@ -1,0 +1,10 @@
+* text=auto
+*.py text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.npz binary
+*.mp4 binary
+*.jpg binary
+# Preserve original bytes: SHA-256 in the dataset manifests is authoritative.
+data/** -text
+players/data/** -text

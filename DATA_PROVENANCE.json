@@ -1,0 +1,28 @@
+{
+  "download_date": "2026-09-22",
+  "sources": [
+    {
+      "file": "players/videos/basket_S1T1_pre.mp4",
+      "url": "https://drive.google.com/file/d/1ONVOjVBPmNdpQWQ_9WJCNYte__4NJ5Ol/view",
+      "sha256": "8af3f89ccd3549f885f24223d6265044965c7a5f5a4d16b773d7b0ae8a85eaad",
+      "license": "CC BY 4.0",
+      "modifications": "video byte-identical; annotations sampled every second frame, frames converted 1-based to 0-based, bbox xywh to xyxy; new detector/OSNet caches"
+    },
+    {
+      "file": "players/videos/basket_S4T1_post.mp4",
+      "url": "https://drive.google.com/file/d/1HxGoUEsahM0ryUm_T2GYDPZIl2kYEBnu/view",
+      "sha256": "72dd2f43114457cc56d4c7897eaa1120cb126df97ac670790d7c42bf7c58ed71",
+      "license": "CC BY 4.0",
+      "modifications": "video byte-identical; annotations sampled every second frame, frames converted 1-based to 0-based, bbox xywh to xyxy; new detector/OSNet caches"
+    },
+    {
+      "file": "players/videos/basket_S6T2_post.mp4",
+      "url": "https://drive.google.com/file/d/1BV9izBdD3I1EySL68JCXbaBj_cIAkftB/view",
+      "sha256": "853cd2c8ca1834ce1297281d9f21d90b9ae4a1aa60b8901f4b5380e716537290",
+      "license": "CC BY 4.0",
+      "modifications": "video byte-identical; annotations sampled every second frame, frames converted 1-based to 0-based, bbox xywh to xyxy; new detector/OSNet caches"
+    }
+  ],
+  "dataset": "https://github.com/open-starlab/TrackID3x3",
+  "paper": "https://arxiv.org/abs/2503.18282v2"
+}
