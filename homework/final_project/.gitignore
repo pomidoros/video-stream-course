@@ -1,0 +1,21 @@
+.venv*/
+__pycache__/
+*.py[cod]
+.DS_Store
+.ipynb_checkpoints/
+.cache/
+artifacts/
+outputs/
+*.pt
+*.pth
+*.onnx
+/models/
+/dist/
+.env
+.env.*
+*.pem
+# Данные устанавливаются из отдельного архива.
+/data/
+/players/data/
+/players/videos/
+*.zip

@@ -1,7 +1,13 @@
-name: Student checks
+name: Homework checks
 on:
   push:
+    paths:
+      - 'homework/**'
+      - '.github/workflows/checks.yml'
   pull_request:
+    paths:
+      - 'homework/**'
+      - '.github/workflows/checks.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,6 +18,9 @@ jobs:
   correctness:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: homework/final_project
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,6 +29,7 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
+          cache-dependency-path: homework/final_project/requirements.txt
       - name: Download course data
         env:
           COURSE_DATA_URL: ${{ vars.COURSE_DATA_URL }}
@@ -34,6 +44,9 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: homework/final_project
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,6 +55,7 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
+          cache-dependency-path: homework/final_project/requirements.txt
       - name: Download course data
         env:
           COURSE_DATA_URL: ${{ vars.COURSE_DATA_URL }}

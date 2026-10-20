@@ -1,0 +1,55 @@
+<div id="lk-explore">
+  <h3>Lucas–Kanade: одно окно, один масштаб</h3>
+  <div class="viz-controls">
+    <label class="form-label">Участок<select id="lk-kind" class="form-select"><option value="texture">Текстура</option><option value="corner">Угол</option><option value="edge">Граница</option><option value="flat">Ровный</option></select></label>
+    <label class="form-label">Сдвиг вправо: <span id="lk-dx-label"></span> px<input id="lk-dx" class="form-range" type="range" min="0" max="14" step="0.5" value="1"></label>
+    <label class="form-label">Итерации: <span id="lk-it-label"></span><input id="lk-it" class="form-range" type="range" min="1" max="30" value="15"></label>
+  </div>
+  <canvas id="lk-canvas" role="img" aria-label="Окно первого кадра и смещённый второй кадр; истинный и оценённый векторы движения"></canvas>
+  <div class="viz-row text-small"><span>Сплошная стрелка — истинный сдвиг</span><span>Пунктир — оценка LK</span></div>
+  <div id="lk-result" aria-live="polite"></div>
+</div>
+<style>#lk-explore canvas{display:block;width:100%;height:auto}#lk-explore{padding-top:4px}#lk-explore h3{padding-right:92px}</style>
+<script>
+(()=>{
+const root=document.getElementById('lk-explore'), cv=root.querySelector('canvas'), ctx=cv.getContext('2d');
+const kind=root.querySelector('#lk-kind'), dx=root.querySelector('#lk-dx'), it=root.querySelector('#lk-it');
+const W=120,H=90;
+function sample(a,x,y){x=Math.max(0,Math.min(W-1.001,x));y=Math.max(0,Math.min(H-1.001,y));const i=Math.floor(x),j=Math.floor(y),u=x-i,v=y-j;return a[j*W+i]*(1-u)*(1-v)+a[j*W+i+1]*u*(1-v)+a[(j+1)*W+i]*(1-u)*v+a[(j+1)*W+i+1]*u*v;}
+function color(token){const probe=document.createElement('span');probe.style.color='var('+token+')';root.appendChild(probe);const value=getComputedStyle(probe).color;probe.remove();return value;}
+function draw(){
+const shift=+dx.value,n=+it.value;root.querySelector('#lk-dx-label').textContent=shift;root.querySelector('#lk-it-label').textContent=n;
+const a=new Float64Array(W*H),b=new Float64Array(W*H);
+for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+ const sx=(1+Math.tanh((x-60)/1.4))/2,sy=(1+Math.tanh((y-45)/1.4))/2;
+ a[y*W+x]=kind.value==='flat'?.5:kind.value==='edge'?.15+.7*sx:kind.value==='corner'?.15+.7*sx*sy:.5+.17*Math.sin(x*.49+y*.2)+.15*Math.cos(y*.59-x*.27)+.12*Math.sin(x*.18+y*.37);
+}
+for(let y=0;y<H;y++)for(let x=0;x<W;x++)b[y*W+x]=sample(a,x-shift,y);
+let h00=0,h01=0,h11=0;const rows=[];
+for(let y=35;y<=55;y++)for(let x=50;x<=70;x++){
+ const gx=(sample(a,x+1,y)-sample(a,x-1,y))/2,gy=(sample(a,x,y+1)-sample(a,x,y-1))/2;
+ rows.push([x,y,gx,gy,a[y*W+x]]);h00+=gx*gx;h01+=gx*gy;h11+=gy*gy;
+}
+const det=h00*h11-h01*h01,minEig=(h00+h11-Math.hypot(h00-h11,2*h01))/2/rows.length;
+let u=0,v=0,valid=minEig>1e-5;
+if(valid)for(let k=0;k<n;k++){let z0=0,z1=0;for(const [x,y,gx,gy,t] of rows){const e=t-sample(b,x+u,y+v);z0+=gx*e;z1+=gy*e;}const du=(h11*z0-h01*z1)/det,dv=(h00*z1-h01*z0)/det;u+=du;v+=dv;if(Math.hypot(du,dv)<.01)break;}
+const width=Math.max(280,Math.round(root.getBoundingClientRect().width));cv.width=width;const stack=width<470, panel=stack?width:(width-16)/2, scale=panel/W;cv.height=Math.round((stack?2:1)*(H*scale+30));ctx.clearRect(0,0,cv.width,cv.height);
+const fg=color('--foreground'),bg=color('--background'),one=color('--viz-series-1'),two=color('--viz-series-2');
+function arrow(x,y,ex,ey,c,dashed){ctx.strokeStyle=c;ctx.lineWidth=2;ctx.setLineDash(dashed?[4,3]:[]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,ey);ctx.stroke();ctx.setLineDash([]);const t=Math.atan2(ey-y,ex-x);ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-7*Math.cos(t-.45),ey-7*Math.sin(t-.45));ctx.moveTo(ex,ey);ctx.lineTo(ex-7*Math.cos(t+.45),ey-7*Math.sin(t+.45));ctx.stroke();}
+for(let z=0;z<2;z++){
+ const ox=stack?0:z*(panel+16),oy=stack?z*(H*scale+30):0;
+ ctx.fillStyle=fg;ctx.font='12px sans-serif';ctx.fillText(z?'Кадр 2':'Кадр 1',ox+4,oy+17);
+ const buf=document.createElement('canvas');buf.width=W;buf.height=H;const bc=buf.getContext('2d'),im=bc.createImageData(W,H),vals=z?b:a;
+ // Blend grayscale intensity between theme foreground and background.
+ bc.fillStyle=bg;bc.fillRect(0,0,W,H);bc.fillStyle=fg;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){bc.globalAlpha=Math.max(0,Math.min(1,vals[y*W+x]));bc.fillRect(x,y,1,1);}bc.globalAlpha=1;
+ ctx.drawImage(buf,ox,oy+24,panel,H*scale);ctx.strokeStyle=one;ctx.lineWidth=1;ctx.strokeRect(ox+50*scale,oy+24+35*scale,21*scale,21*scale);
+ const x=ox+60*scale,y=oy+24+45*scale;arrow(x,y,x+shift*scale,y,one,false);if(valid)arrow(x,y+5,x+u*scale,y+5+v*scale,two,true);
+}
+root.querySelector('#lk-result').textContent=valid?`Истина (${shift.toFixed(1)}, 0) px · LK (${u.toFixed(2)}, ${v.toFixed(2)}) px · ошибка ${Math.hypot(u-shift,v).toFixed(2)} px`:'Матрица вырождена: оба компонента движения восстановить нельзя.';
+}
+function save(){if(window.openai?.setWidgetState)window.openai.setWidgetState({modelContent:{kind:kind.value,dx:+dx.value,iterations:+it.value},privateContent:null}).catch(()=>{});}
+function restore(state){const s=state?.modelContent;if(s){if(['texture','corner','edge','flat'].includes(s.kind))kind.value=s.kind;if(Number.isFinite(s.dx))dx.value=s.dx;if(Number.isFinite(s.iterations))it.value=s.iterations;}}
+restore(window.openai?.widgetState);for(const el of [kind,dx,it])el.addEventListener('input',()=>{draw();save();});window.addEventListener('openai:set_globals',e=>{restore(e.detail?.globals?.widgetState);draw();});new ResizeObserver(draw).observe(root);new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['class','style']});draw();
+})();
+</script>

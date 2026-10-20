@@ -1,0 +1,18 @@
+{
+  "repository": "ClementPinard/FlowNetPytorch",
+  "commit": "d5f3292a738209d5f3ea450cf714265034fd033a",
+  "weights": {
+    "flownets": {
+      "filename": "flownets_EPE1.951.pth",
+      "sha256": "d98505dc749c35f0d4b4ce0536b4f64797ec22ea194a5f743af97dc3f778447d",
+      "url": "https://media.githubusercontent.com/media/ClementPinard/FlowNetPytorch/d5f3292a738209d5f3ea450cf714265034fd033a/weights/flownets_EPE1.951.pth",
+      "training": "FlyingChairs; PyTorch RGB checkpoint"
+    },
+    "flownetc": {
+      "filename": "flownetc_EPE1.766.pth",
+      "sha256": "b375584e3fb6f0208bf659c72e588803999ec038bc5ea42ecd023ace7be6ffc4",
+      "url": "https://media.githubusercontent.com/media/ClementPinard/FlowNetPytorch/d5f3292a738209d5f3ea450cf714265034fd033a/weights/flownetc_EPE1.766.pth",
+      "training": "FlyingChairs; PyTorch RGB checkpoint"
+    }
+  }
+}

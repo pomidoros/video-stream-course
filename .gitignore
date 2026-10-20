@@ -1,21 +1,21 @@
+# Локальные окружения и служебные файлы
 .venv*/
+venv/
 __pycache__/
 *.py[cod]
 .DS_Store
 .ipynb_checkpoints/
 .cache/
-artifacts/
-outputs/
-*.pt
-*.pth
-*.onnx
-/models/
-/dist/
+.mpl-cache/
+.ipython/
 .env
 .env.*
 *.pem
-# Данные устанавливаются из отдельного архива.
-/data/
-/players/data/
-/players/videos/
+*.part
+*.pt
+*.pth
+*.onnx
 *.zip
+
+# Веса урока 2 скачиваются отдельно
+/lessons/lesson_02/flownet_lesson/weights/
