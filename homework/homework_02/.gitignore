@@ -1,0 +1,8 @@
+.venv*/
+.torch-cache/
+.mpl-cache/
+__pycache__/
+.pytest_cache/
+outputs*/
+*.pth
+instructor/

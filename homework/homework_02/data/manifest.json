@@ -1,0 +1,48 @@
+{
+  "videos": [
+    {
+      "file": "bowling.mp4",
+      "target": "bowling",
+      "description": "Боулинг: спортсмен бросает шар по дорожке.",
+      "frames": 80,
+      "fps": 15,
+      "duration_s": 5.333333333333333,
+      "sha256": "f9a1dcdd1dbc0908a38f80f36bf75b68e99cd2f1384d34d384b76fb0fa22e92a",
+      "source": {
+        "filename": "bowling.webm",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d3/20190818_EJ_Tackett_lofting_bowling_ball.webm",
+        "page_url": "https://commons.wikimedia.org/wiki/File:20190818_EJ_Tackett_lofting_bowling_ball.webm",
+        "creator": "RCraig09",
+        "license_name": "CC BY-SA 4.0",
+        "sha256": "3a8961df1e8b395fd5b818b5b9315a333ce7e0a1f83c9b75c5cfba15a48d281a"
+      },
+      "prepared_stream_frames": [
+        75,
+        155
+      ]
+    },
+    {
+      "file": "archery.mp4",
+      "target": "archery",
+      "description": "Стрельба из лука: лучник прицеливается и выпускает стрелу.",
+      "frames": 90,
+      "fps": 15,
+      "duration_s": 6.0,
+      "sha256": "898fa58d9c7dec3f3f3ef9d900a8962ddb812fcc277193bb0bd6d583876cf9db",
+      "source": {
+        "filename": "archery.webm",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/85/Field_Archery.webm",
+        "page_url": "https://commons.wikimedia.org/wiki/File:Field_Archery.webm",
+        "creator": "Simon Allen",
+        "license_name": "CC BY 3.0",
+        "sha256": "20ac3d756e49747f651cfe06c5ec4fc69181b834736a595fc15762b19953c126"
+      },
+      "prepared_stream_frames": [
+        230,
+        320
+      ]
+    }
+  ],
+  "preparation": "Выделены интервалы действий из ранее подготовленного sports_stream.mp4; без звука, 320×180, 15 FPS, повторное кодирование MP4. Интервалы prepared_stream_frames — [start, end), нумерация с нуля.",
+  "prepared_stream_sha256": "d57716e68d2f851828db9386b144fe625170b6c2b8944b4c1de0945ad0a3a541"
+}
