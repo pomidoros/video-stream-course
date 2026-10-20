@@ -2,11 +2,11 @@ name: Homework checks
 on:
   push:
     paths:
-      - 'homework/**'
+      - 'homework/final_project/**'
       - '.github/workflows/checks.yml'
   pull_request:
     paths:
-      - 'homework/**'
+      - 'homework/final_project/**'
       - '.github/workflows/checks.yml'
   workflow_dispatch:
 permissions:

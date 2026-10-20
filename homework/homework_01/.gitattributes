@@ -1,0 +1,4 @@
+# Сохраняем исходные байты CSV и видео набора данных.
+data/** -text whitespace=cr-at-eol
+*.mp4 binary
+*.png binary

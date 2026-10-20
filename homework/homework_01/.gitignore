@@ -1,0 +1,12 @@
+.venv*/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+starter_kit/results/
+starter_kit/interactive/data.js
+# Контрольная разметка challenge в публичный комплект не входит.
+data/challenge/ground_truth.csv
+data/challenge/expected_counts.json
+instructor_solution/
+private_data/

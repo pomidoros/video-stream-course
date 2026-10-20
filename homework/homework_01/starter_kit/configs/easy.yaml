@@ -1,0 +1,7 @@
+tracker:
+  min_hits: 2
+  max_missed: 8
+  max_distance: 55.0
+kalman:
+  process_var: 16.0
+  measurement_var: 16.0

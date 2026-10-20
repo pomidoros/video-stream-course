@@ -1,0 +1,14 @@
+{
+  "entry_line": [
+    [
+      40,
+      180
+    ],
+    [
+      600,
+      180
+    ]
+  ],
+  "entry_direction": "negative_to_positive",
+  "initial_occupancy": 0
+}

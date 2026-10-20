@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Камера ослепла — интерактивный отчёт</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0d1117; --panel:#161b22; --line:#30363d; --text:#e6edf3; --muted:#8b949e; --green:#3fb950; --orange:#f0883e; --cyan:#39c5cf; --violet:#bc8cff; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 system-ui,-apple-system,sans-serif; }
+    main { max-width:1180px; margin:0 auto; padding:24px; }
+    h1 { margin:0; font-size:24px; font-weight:650; }
+    .subtitle { margin:4px 0 20px; color:var(--muted); }
+    .toolbar,.toggles,.stats { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .toolbar { padding:12px; background:var(--panel); border:1px solid var(--line); border-radius:10px; }
+    button,select { color:var(--text); background:#21262d; border:1px solid var(--line); border-radius:7px; padding:7px 11px; font:inherit; }
+    button { cursor:pointer; min-width:82px; }
+    button:hover { border-color:#6e7681; }
+    label { color:var(--muted); }
+    input[type=range] { flex:1; min-width:180px; accent-color:var(--cyan); }
+    .frame-label { min-width:115px; font-variant-numeric:tabular-nums; color:var(--text); }
+    .toggles { margin:12px 0; }
+    .toggles label { display:flex; align-items:center; gap:6px; }
+    .layout { display:grid; grid-template-columns:minmax(0,3fr) minmax(250px,1fr); gap:14px; }
+    .stage { position:relative; aspect-ratio:16/9; background:#05070a; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+    video,canvas { position:absolute; inset:0; display:block; width:100%; height:100%; }
+    canvas { pointer-events:none; }
+    .side { display:flex; flex-direction:column; gap:12px; }
+    .stats { display:grid; grid-template-columns:repeat(2,1fr); }
+    .stat,.events { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; }
+    .stat span { display:block; color:var(--muted); font-size:12px; }
+    .stat strong { display:block; margin-top:2px; font-size:22px; font-weight:650; font-variant-numeric:tabular-nums; }
+    .events { flex:1; min-height:170px; }
+    .events h2 { font-size:14px; margin:0 0 8px; font-weight:650; }
+    .events ul { list-style:none; margin:0; padding:0; }
+    .events li { padding:6px 0; border-top:1px solid var(--line); color:var(--muted); }
+    .events li:first-child { border-top:0; }
+    .events b { color:var(--text); font-weight:600; }
+    .legend { display:flex; flex-wrap:wrap; gap:14px; color:var(--muted); margin-top:10px; font-size:12px; }
+    .swatch { display:inline-block; width:18px; height:3px; margin-right:5px; vertical-align:middle; }
+    .notice { color:var(--orange); margin-left:auto; }
+    @media (max-width:800px) { main{padding:14px}.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}.events{min-height:0} }
+    @media (max-width:520px) { .side{grid-template-columns:1fr}.toolbar{align-items:stretch}.toolbar input[type=range]{width:100%} }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Камера ослепла</h1>
+  <p class="subtitle">Измерения, прогноз Калмана и события пересечения линии</p>
+
+  <div class="toolbar">
+    <label for="scene">Сцена</label>
+    <select id="scene"><option value="debug">Debug</option><option value="development" selected>Development</option><option value="challenge">Challenge</option></select>
+    <button id="play" type="button">▶ Старт</button>
+    <input id="frame" type="range" min="1" value="1" aria-label="Номер кадра">
+    <span id="frameLabel" class="frame-label">Кадр 1 / 1</span>
+    <label for="speed">Скорость</label>
+    <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+  </div>
+
+  <div class="toggles">
+    <label><input id="measurements" type="checkbox" checked> Измерения</label>
+    <label><input id="predictions" type="checkbox" checked> Прогнозы</label>
+    <label><input id="trails" type="checkbox" checked> Траектории</label>
+    <label><input id="groundTruth" type="checkbox"> Ground truth</label>
+    <span id="notice" class="notice"></span>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="stage">
+        <video id="video" muted playsinline preload="metadata"></video>
+        <canvas id="overlay" width="640" height="360" aria-label="Визуализация треков поверх видео"></canvas>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--green)"></i>измеренный трек</span>
+        <span><i class="swatch" style="background:var(--orange)"></i>прогноз</span>
+        <span><i class="swatch" style="background:var(--violet)"></i>ground truth</span>
+        <span><i class="swatch" style="background:var(--cyan)"></i>контрольная линия</span>
+      </div>
+    </div>
+    <aside class="side">
+      <div class="stats">
+        <div class="stat"><span>Вошло</span><strong id="entered">0</strong></div>
+        <div class="stat"><span>Вышло</span><strong id="exited">0</strong></div>
+        <div class="stat"><span>Сейчас</span><strong id="current">0</strong></div>
+        <div class="stat"><span>ID switches</span><strong id="switches">—</strong></div>
+      </div>
+      <section class="events">
+        <h2>Последние события</h2>
+        <ul id="eventList"><li>Пересечений ещё нет</li></ul>
+      </section>
+    </aside>
+  </div>
+</main>
+<script src="data.js"></script>
+<script>
+(() => {
+  const data = window.HW1_DATA;
+  const $ = id => document.getElementById(id);
+  const video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d');
+  let scene, frame = 1;
+
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  function setScene(name) {
+    scene = data.scenes[name]; frame = 1;
+    video.pause(); $('play').textContent = '▶ Старт';
+    video.src = scene.video; video.playbackRate = Number($('speed').value);
+    $('frame').max = scene.frames; $('frame').value = 1;
+    canvas.width = scene.width; canvas.height = scene.height;
+    const hasGt = Boolean(scene.groundTruth);
+    $('groundTruth').disabled = !hasGt; if (!hasGt) $('groundTruth').checked = false;
+    $('notice').textContent = hasGt ? '' : 'GT скрыт для challenge';
+    render();
+  }
+  function rect(item, color, width=2) {
+    ctx.strokeStyle=color; ctx.lineWidth=width; ctx.strokeRect(item[1],item[2],item[3],item[4]);
+  }
+  function drawTrail(trackId, upto) {
+    const points=[];
+    for(let f=Math.max(1,upto-24);f<=upto;f++) {
+      const track=(scene.tracks[String(f)]||[]).find(t=>t[0]===trackId);
+      if(track) points.push([track[1]+track[3]/2,track[2]+track[4]/2]);
+    }
+    if(points.length<2) return;
+    ctx.beginPath(); ctx.moveTo(...points[0]); points.slice(1).forEach(p=>ctx.lineTo(...p)); ctx.stroke();
+  }
+  function render() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const line=scene.zones.entry_line;
+    ctx.strokeStyle=css('--cyan'); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(...line[0]); ctx.lineTo(...line[1]); ctx.stroke();
+    if($('measurements').checked) {
+      ctx.strokeStyle='rgba(220,225,230,.65)'; ctx.lineWidth=1;
+      (scene.measurements[String(frame)]||[]).forEach(d=>ctx.strokeRect(d[0],d[1],d[2],d[3]));
+    }
+    if($('groundTruth').checked && scene.groundTruth) {
+      (scene.groundTruth[String(frame)]||[]).forEach(g=>{ rect(g,css('--violet'),1); ctx.fillStyle=css('--violet'); ctx.fillText(`GT ${g[0]}`,g[1],Math.max(12,g[2]-3)); });
+    }
+    (scene.tracks[String(frame)]||[]).filter(t=>t[6]).forEach(t=>{
+      const predicted=t[5]==='p'; if(predicted && !$('predictions').checked) return;
+      const color=predicted?css('--orange'):css('--green'); ctx.strokeStyle=color;
+      if($('trails').checked) { ctx.globalAlpha=.75; drawTrail(t[0],frame); ctx.globalAlpha=1; }
+      rect(t,color,2); ctx.fillStyle=color; ctx.font='12px system-ui'; ctx.fillText(`ID ${t[0]} ${predicted?'P':'M'}`,t[1],Math.max(12,t[2]-4));
+    });
+    const events=scene.events.filter(e=>e[0]<=frame);
+    const entered=events.filter(e=>e[2]==='entered').length, exited=events.filter(e=>e[2]==='exited').length;
+    $('entered').textContent=entered; $('exited').textContent=exited;
+    $('current').textContent=(scene.zones.initial_occupancy||0)+entered-exited;
+    $('switches').textContent=scene.metrics.id_switches ?? '—';
+    $('frameLabel').textContent=`Кадр ${frame} / ${scene.frames}`; $('frame').value=frame;
+    const recent=events.slice(-6).reverse();
+    $('eventList').innerHTML=recent.length?recent.map(e=>`<li>Кадр ${e[0]} · <b>ID ${e[1]}</b> · ${e[2]==='entered'?'вход':'выход'}</li>`).join(''):'<li>Пересечений ещё нет</li>';
+  }
+  $('scene').addEventListener('change',e=>setScene(e.target.value));
+  $('play').addEventListener('click',async()=>{ if(video.paused){await video.play();$('play').textContent='❚❚ Пауза'}else{video.pause();$('play').textContent='▶ Старт'} });
+  $('frame').addEventListener('input',e=>{video.pause();$('play').textContent='▶ Старт';frame=Number(e.target.value);video.currentTime=(frame-1)/scene.fps;render()});
+  $('speed').addEventListener('change',e=>video.playbackRate=Number(e.target.value));
+  ['measurements','predictions','trails','groundTruth'].forEach(id=>$(id).addEventListener('change',render));
+  video.addEventListener('timeupdate',()=>{frame=Math.min(scene.frames,Math.max(1,Math.floor(video.currentTime*scene.fps)+1));render()});
+  video.addEventListener('ended',()=>{$('play').textContent='▶ Старт'});
+  setScene('development');
+})();
+</script>
+</body>
+</html>
